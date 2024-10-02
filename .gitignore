@@ -1,0 +1,16 @@
+# Ignore Python compiled files
+__pycache__/
+*.py[cod]
+*.so
+
+# Ignore virtual environment folders
+venv/
+env/
+
+# Ignore other system files
+.DS_Store
+.idea/
+.vscode/
+
+# Ignore Flask uploads folder if you don’t want to track images
+uploads/

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection in Images</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        img {
+            margin-top: 20px;
+            border: 2px solid #ccc;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload an Image for Object Detection</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*" required>
+        <br><br>
+        <input type="submit" value="Upload Image">
+    </form>
+
+    {% if filename %}
+        <h2>Original Image:</h2>
+        <img src="{{ url_for('uploaded_file', filename=filename) }}" alt="Uploaded Image" width="500">
+    {% endif %}
+
+    {% if output_image %}
+        <h2>Detected Objects:</h2>
+        <img src="{{ url_for('uploaded_file', filename=output_image) }}" alt="Detected Objects" width="500">
+        <h3>Objects detected in the image:</h3>
+        <ul>
+            {% for obj in detected_objects %}
+                <li>{{ obj }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
