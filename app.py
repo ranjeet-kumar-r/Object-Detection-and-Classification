@@ -17,8 +17,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 # Load pre-trained model from TensorFlow Hub
-MODEL_URL = "https://tfhub.dev/tensorflow/ssd_mobilenet_v2/fpnlite_320x320/1"
-detector = hub.load(MODEL_URL)
+MODEL_DIR = "models/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8/saved_model"
+detector = tf.saved_model.load(MODEL_DIR)
 
 # Load labels for COCO dataset
 LABELS_URL = "https://raw.githubusercontent.com/amikelive/coco-labels/master/coco-labels-paper.txt"
@@ -37,13 +37,23 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Function to run object detection on an image
+def delete_previous_image(upload_folder):
+    for filename in os.listdir(upload_folder):
+        file_path = os.path.join(upload_folder, filename)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)  # Delete the file
+        except Exception as e:
+            print(f"Error deleting file {file_path}: {e}")
+
+# Object detection function
 def detect_objects(image_path):
     img = cv2.imread(image_path)
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img_tensor = tf.convert_to_tensor(img_rgb, dtype=tf.uint8)
     img_tensor = tf.expand_dims(img_tensor, 0)  # Add batch dimension
 
-    # Perform detection
+    # Perform detection (assuming 'detector' is defined)
     detections = detector(img_tensor)
 
     # Extract detection results
@@ -65,7 +75,7 @@ def detect_objects(image_path):
         box = detections['detection_boxes'][i]
         class_id = detections['detection_classes'][i]
         class_name = labels[class_id - 1] if class_id <= len(labels) else 'N/A'
-
+        print(class_id, class_name, labels)
         # Store detected object name and score
         detected_objects.append(f"{class_name} ({int(score * 100)}%)")
 
@@ -100,6 +110,9 @@ def upload_file():
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
+            # Delete the previous uploaded image before saving the new one
+            delete_previous_image(app.config['UPLOAD_FOLDER'])
+
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)

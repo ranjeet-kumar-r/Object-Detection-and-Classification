@@ -7,10 +7,18 @@ __pycache__/
 venv/
 env/
 
-# Ignore other system files
+# Ignore system files
 .DS_Store
 .idea/
 .vscode/
 
 # Ignore Flask uploads folder if you don’t want to track images
 uploads/
+static/uploads/
+
+# Ignore model files if they're too large to track in Git
+models/
+
+# Optional: Ignore log files or temporary files
+*.log
+*.tmp
