@@ -1,14 +1,20 @@
 # Object Detection System
 
 ## Overview
-This project implements an advanced object detection system using the Faster R-CNN ResNet50 model. The system can detect and classify objects in images, draw bounding boxes around them, and display object names along with confidence scores. The project is designed using Flask as the backend and Python libraries like TensorFlow for object detection.
+This project features an object detection system powered by the Faster R-CNN ResNet50 model. It detects and classifies objects in images, draws bounding boxes, and displays confidence scores for each detected object. Built with Flask as the backend, the application utilizes Python libraries such as TensorFlow and OpenCV for efficient image processing and object detection.
+
 
 ## Features
 - Upload images for object detection and classification.
 - Detect and classify multiple objects within the uploaded image.
-- Display bounding boxes around detected objects and label them.
+- Display bounding boxes around detected objects.
 - Show confidence scores for each detected object.
-- Optional fine-tuning for custom datasets.
+- Preview original and processed images side-by-side.
+- List and display cut-out images of detected objects.
+- Support for common image file formats (PNG, JPG, JPEG, GIF).
+- Responsive web interface built with Bootstrap.
+- Automatic label download and integration with COCO dataset.
+- Secure and validated image upload handling.
 
 ## Requirements
 To run this project, you need to have the following installed:
@@ -32,21 +38,20 @@ This project uses the pre-trained Faster R-CNN ResNet50 model trained on the COC
 
 - [Download Faster R-CNN ResNet50 (COCO)](http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet50_coco_2018_01_28.tar.gz)
 
+After downloading the model, extract the files and place the model in the `models/` directory of the project.
+
 ### Command to download the model:
 ```
 wget http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8.tar.gz
+mkdir models
 tar -xvzf faster_rcnn_resnet50_v1_640x640_coco17_tpu-8.tar.gz -C models/
 ```
 
-After downloading the model, extract the files and place the model in the `models/` directory of the project.
 
 ### Model Directory Structure:
 ```bash
 models/
 ├── faster_rcnn_resnet50
-│   ├── saved_model.pb
-│   ├── checkpoint
-│   └── pipeline.config
 ```
 
 ## Environment Setup (and Why It's Important)
