@@ -1,52 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Object Detection in Images</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-        img {
-            margin-top: 20px;
-            border: 2px solid #ccc;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        li {
-            font-size: 18px;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Upload an Image for Object Detection</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Object Detection</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    <link
+      href="{{ url_for('static', filename='style.css') }}"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="header">Upload an Image for Object Detection</h1>
 
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="file" accept="image/*" required>
-        <br><br>
-        <input type="submit" value="Upload Image">
-    </form>
+      <!-- Upload Form -->
+      <form
+        method="POST"
+        enctype="multipart/form-data"
+        id="uploadForm"
+        class="d-flex gap-3"
+      >
+        <input
+          id="fileInput"
+          type="file"
+          name="file"
+          accept="image/*"
+          class="form-control"
+          required
+        />
+        <button type="submit" class="btn btn-primary min-width-fit-content">
+          Upload Image
+        </button>
+      </form>
 
-    {% if filename %}
-        <h2>Original Image:</h2>
-        <img src="{{ url_for('uploaded_file', filename=filename) }}" alt="Uploaded Image" width="500">
-    {% endif %}
+      <div class="mt-5" id="imagePreviewContainer" style="display: none">
+        <h2>Image Preview</h2>
+        <div class="image-container">
+          <img id="imagePreview" class="img-fluid" alt="Image Preview" />
+          <div class="overlay" id="progressOverlay" style="display: none">
+            <div class="progress" style="display: none; height: 100%">
+              <div
+                class="progress-bar progress-bar-striped progress-bar-animated"
+                id="progressBar"
+                style="height: 300px"
+              >
+                0%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    {% if output_image %}
-        <h2>Detected Objects:</h2>
-        <img src="{{ url_for('uploaded_file', filename=output_image) }}" alt="Detected Objects" width="500">
-        <h3>Objects detected in the image:</h3>
-        <ul>
+      <!-- Display Uploaded Images -->
+      <div class="mt-5" id="result">
+        <div class="d-flex justify-content-between">
+          {% if filename %}
+          <div>
+            <h2>Original Image</h2>
+            <div class="image-container">
+              <img
+                src="{{ url_for('uploaded_file', filename=filename) }}"
+                alt="Uploaded Image"
+                class="img-fluid"
+                id="uploadedImage"
+              />
+            </div>
+          </div>
+
+          {% endif %}
+
+          <!-- Display Uploaded Image -->
+          {% if processed_image_path %}
+          <div>
+            <h2>Processed Image</h2>
+            <div class="image-container">
+              <img
+                src="{{ url_for('uploaded_file', filename=processed_image_path) }}"
+                alt="Uploaded Image"
+                class="img-fluid"
+                id="uploadedImage"
+              />
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Display Detected Objects -->
+        {% if detected_objects %}
+        <div class="mt-5">
+          <h2>Objects List</h2>
+          <div class="divider"></div>
+          <div class="d-flex gap-2 flex-wrap">
             {% for obj in detected_objects %}
-                <li>{{ obj }}</li>
+            <span class="badge rounded-pill text-bg-secondary">{{ obj }}</span>
+            <!-- <li class="list-group-item">{{ obj }}</li> -->
             {% endfor %}
-        </ul>
-    {% endif %}
-</body>
+          </div>
+          <!-- <ul class="list-group"> -->
+
+          <!-- </ul> -->
+        </div>
+        {% endif %} {% if cutout_paths %}
+        <h3 class="mt-5">Objects</h3>
+        <div class="divider"></div>
+        <div class="cutout d-flex gap-3">
+          {% for cutout, label in cutout_paths %}
+          <div class="mb-4">
+            <h4><span class="badge text-bg-secondary">{{ label }}</span></h4>
+            <div class="image-container">
+              <img
+                src="{{ url_for('uploaded_file', filename=cutout) }}"
+                alt="Object Cutout"
+                class="img-fluid"
+              />
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <!-- Bootstrap JS and Custom Script -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
 </html>

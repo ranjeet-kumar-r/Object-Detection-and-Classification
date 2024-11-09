@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+body {
+    font-family:work sans;
+}
+
+.header {
+    padding: 16px 0;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 2.4rem;
+    color: #000;
+    font-family: "Montserrat", sans-serif;
+}
+
+.min-width-fit-content {
+    min-width: fit-content;
+  }
+
+.image-container {
+    width: 30vw;
+    height: 30vh;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: black;
+  }
+  
+  .image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.progress-text {
+    font-size: 2em;
+}
+
+#result {
+    margin-bottom: 400px;
+}
+
+.divider {
+    margin-bottom: 10px;
+    height: 1px;
+    width: 100%;
+    background-color: rgb(176, 172, 172);
+    border-radius: 2px; /* Adds rounded corners */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); /* Adds shadow */
+}
+
+.badge {
+    font-size: 16px;
+    text-transform: capitalize;
+}
+
+.cutout {
+    max-width: 100%;
+    overflow-x: auto;
+}

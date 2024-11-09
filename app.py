@@ -1,3 +1,4 @@
+import copy
 import os
 import cv2
 import numpy as np
@@ -12,6 +13,10 @@ app = Flask(__name__)
 # Folder to store uploaded images
 UPLOAD_FOLDER = 'static/uploads/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Ensure the upload folder exists
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 # Allowed file extensions for uploads
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -46,58 +51,62 @@ def delete_previous_image(upload_folder):
         except Exception as e:
             print(f"Error deleting file {file_path}: {e}")
 
-# Object detection function
-def detect_objects(image_path):
+# Object detection and cut-out function
+def detect_objects_and_cutout(image_path):
     img = cv2.imread(image_path)
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img_tensor = tf.convert_to_tensor(img_rgb, dtype=tf.uint8)
     img_tensor = tf.expand_dims(img_tensor, 0)  # Add batch dimension
 
-    # Perform detection (assuming 'detector' is defined)
+    # Perform detection
     detections = detector(img_tensor)
 
     # Extract detection results
     num_detections = int(detections.pop('num_detections'))
-    detections = {key: value[0, :num_detections].numpy() 
-                 for key, value in detections.items()}
+    detections = {key: value[0, :num_detections].numpy() for key, value in detections.items()}
     detections['num_detections'] = num_detections
     detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
 
-    # Set confidence threshold
     confidence_threshold = 0.5
     detected_objects = []
 
-    # Draw bounding boxes and labels on the image
+    cutout_paths = []  # To store paths of individual object cutouts
+    processed_img = copy.deepcopy(img)
+
     for i in range(num_detections):
         score = detections['detection_scores'][i]
         if score < confidence_threshold:
             continue
+
         box = detections['detection_boxes'][i]
         class_id = detections['detection_classes'][i]
         class_name = labels[class_id - 1] if class_id <= len(labels) else 'N/A'
-        print(class_id, class_name, labels)
-        # Store detected object name and score
-        detected_objects.append(f"{class_name} ({int(score * 100)}%)")
 
-        # Convert box coordinates from normalized to pixel values
+        # Get the bounding box coordinates
         height, width, _ = img.shape
         ymin, xmin, ymax, xmax = box
-        (left, right, top, bottom) = (xmin * width, xmax * width,
-                                      ymin * height, ymax * height)
+        (left, right, top, bottom) = (int(xmin * width), int(xmax * width), int(ymin * height), int(ymax * height))
 
-        # Draw the bounding box
-        cv2.rectangle(img, (int(left), int(top)), (int(right), int(bottom)), (0, 255, 0), 2)
-        # Put label near the bounding box
-        label = f"{class_name}: {int(score * 100)}%"
-        cv2.putText(img, label, (int(left), int(top) - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        # Cut out the object from the image
+        cutout = img[top:bottom, left:right]
+        cutout_filename = f"cutout_{class_name}_{i}.jpg"
+        cutout_path = os.path.join(app.config['UPLOAD_FOLDER'], cutout_filename)
+        cv2.imwrite(cutout_path, cutout)
+        cutout_paths.append((cutout_filename, class_name))
+        detected_objects.append(f"{class_name} ({int(score * 100)}%)")
 
-    # Save the output image with bounding boxes
-    output_filename = "output_" + os.path.basename(image_path)
-    output_path = os.path.join(UPLOAD_FOLDER, output_filename)
-    cv2.imwrite(output_path, img)
+         
+        # Draw bounding box on the original image
+        cv2.rectangle(processed_img, (left, top), (right, bottom), (0, 255, 0), 2)
+        cv2.putText(processed_img, f"{int(score * 100)}%", (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-    return output_filename, detected_objects
+
+    # Save the image with bounding boxes
+    processed_image_file_name = "processed_" + os.path.basename(image_path)
+    processed_image_path = os.path.join(UPLOAD_FOLDER, processed_image_file_name)
+    cv2.imwrite(processed_image_path, processed_img)
+
+    return detected_objects, cutout_paths, processed_image_file_name
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
@@ -116,14 +125,12 @@ def upload_file():
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)
+            # Perform object detection and cut out objects
+            detected_objects, cutout_paths, processed_image_path = detect_objects_and_cutout(file_path)
 
-            # Perform object detection and get detected object names
-            output_filename, detected_objects = detect_objects(file_path)
-
-            # Redirect to display the detected image and objects
-            return render_template('index.html', filename=filename, output_image=output_filename, detected_objects=detected_objects)
-
-    return render_template('index.html', filename=None, output_image=None, detected_objects=[])
+            # Redirect to display the detected objects and cutouts
+            return render_template('index.html',filename=filename, processed_image_path=processed_image_path, detected_objects=detected_objects, cutout_paths=cutout_paths)
+    return render_template('index.html', filename=None, processed_image_path=None, detected_objects=[], cutout_paths=[], )
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
