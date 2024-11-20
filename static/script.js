@@ -40,3 +40,11 @@ const form = document.getElementById('uploadForm');
                 reader.readAsDataURL(file);
             }
         });
+
+document.querySelectorAll('.toggle-sidebar').forEach(button => {
+  button.addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('mainContent').classList.toggle('expanded');
+  });
+});
+;

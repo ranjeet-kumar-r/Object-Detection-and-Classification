@@ -4,8 +4,10 @@ import cv2
 import numpy as np
 import tensorflow as tf
 import tensorflow_hub as hub
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, send_file
 from werkzeug.utils import secure_filename
+import zipfile
+from io import BytesIO
 
 # Initialize Flask App
 app = Flask(__name__)
@@ -92,7 +94,7 @@ def detect_objects_and_cutout(image_path):
         cutout_filename = f"cutout_{class_name}_{i}.jpg"
         cutout_path = os.path.join(app.config['UPLOAD_FOLDER'], cutout_filename)
         cv2.imwrite(cutout_path, cutout)
-        cutout_paths.append((cutout_filename, class_name))
+        cutout_paths.append((cutout_filename, class_name, cutout_path))
         detected_objects.append(f"{class_name} ({int(score * 100)}%)")
 
          
@@ -128,13 +130,41 @@ def upload_file():
             # Perform object detection and cut out objects
             detected_objects, cutout_paths, processed_image_path = detect_objects_and_cutout(file_path)
 
+            # If you want to show the stats section, create a stats dictionary
+            stats = {
+                'total_detections': len(detected_objects),
+            }
+
             # Redirect to display the detected objects and cutouts
-            return render_template('index.html',filename=filename, processed_image_path=processed_image_path, detected_objects=detected_objects, cutout_paths=cutout_paths)
-    return render_template('index.html', filename=None, processed_image_path=None, detected_objects=[], cutout_paths=[], )
+            return render_template('index.html', filename=filename, processed_image_path=processed_image_path, detected_objects=detected_objects, cutout_paths=cutout_paths, stats=stats)
+    
+    # For GET request, you can either skip the stats or provide some default/cached values
+    return render_template('index.html', filename=None, processed_image_path=None, detected_objects=[], cutout_paths=[], stats=None)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return redirect(url_for('static', filename='uploads/' + filename))
+
+@app.route('/download/<filename>')
+def download_file(filename):
+    return send_file(os.path.join(app.config['UPLOAD_FOLDER'], filename),
+                    as_attachment=True)
+
+@app.route('/download-all')
+def download_all():
+    memory_file = BytesIO()
+    with zipfile.ZipFile(memory_file, 'w') as zf:
+        for filename in os.listdir(app.config['UPLOAD_FOLDER']):
+            if filename.startswith('cutout_'):
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                zf.write(file_path, filename)
+    memory_file.seek(0)
+    return send_file(
+        memory_file,
+        download_name='cutouts.zip',
+        as_attachment=True,
+        mimetype='application/zip'
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
